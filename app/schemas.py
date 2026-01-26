@@ -1,6 +1,13 @@
-from datetime import datetime
+from datetime import datetime, date
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    EmailStr,
+    Field,
+    field_validator,
+    ValidationInfo,
+)
 
 from app.models import UserRole, BookingStatus, PropertyStatus
 
@@ -29,6 +36,7 @@ class PropertyBase(BaseModel):
     address: str = Field(..., min_length=3, max_length=255)
     city: str = Field(..., min_length=3, max_length=255)
     beds: int = Field(..., ge=1, le=10)
+    price: float = Field(..., ge=0.0)
     host_id: int
 
 
@@ -42,6 +50,7 @@ class PropertyUpdate(BaseModel):
     address: str | None = Field(None, min_length=3, max_length=255)
     city: str | None = Field(None, min_length=3, max_length=255)
     beds: int | None = Field(None, ge=1, le=10)
+    price: float | None = Field(None, ge=0.0)
 
 
 class PropertyResponse(BaseModel):
@@ -54,6 +63,7 @@ class PropertyResponse(BaseModel):
     address: str
     city: str
     beds: int
+    price: float
     status: PropertyStatus
     created_at: datetime
     user: UserResponse
@@ -67,8 +77,24 @@ class PaginatedProperties(BaseModel):
 
 
 class BookingCreate(BaseModel):
-    room_id: int
+    property_id: int
     guests: int
+    check_in: date
+    check_out: date
+
+    @field_validator("check_in")
+    @classmethod
+    def check_in_date_is_after_today(cls, v: date) -> date:
+        if v > date.today():
+            raise ValueError("Check-in date must be after today")
+        return v
+
+    @field_validator("check_out")
+    @classmethod
+    def check_out_must_be_after_start(cls, v: date, info: ValidationInfo) -> date:
+        if "check_in" in info.data and v <= info.data["check_in"]:
+            raise ValueError("Check-out must be after check-in")
+        return v
 
 
 class BookingResponse(BaseModel):
@@ -76,10 +102,10 @@ class BookingResponse(BaseModel):
 
     id: int
     guest_id: int
-    room_id: int
+    property_id: int
     guests: int
-    check_in: datetime
-    check_out: datetime
+    check_in: date
+    check_out: date
     total_price: float
     status: BookingStatus
     created_at: datetime

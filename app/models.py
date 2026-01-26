@@ -1,5 +1,5 @@
 import enum
-from datetime import datetime
+from datetime import datetime, date
 
 from sqlalchemy import ForeignKey, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -16,7 +16,7 @@ class UserRole(str, enum.Enum):
 class BookingStatus(str, enum.Enum):
     PENDING = "pending"
     CONFIRMED = "confirmed"
-    CANCELED = "canceled"
+    CANCELLED = "canceled"
     COMPLETED = "completed"
 
 
@@ -55,21 +55,22 @@ class Property(Base):
     address: Mapped[str] = mapped_column(String(255))
     city: Mapped[str] = mapped_column(String(255))
     beds: Mapped[int] = mapped_column(default=1)
+    price: Mapped[float] = mapped_column(default=0.0)
     status: Mapped[PropertyStatus] = mapped_column(default=PropertyStatus.AVAILABLE)
     created_at: Mapped[datetime] = mapped_column(default=datetime.now)
 
-    bookings: Mapped[list["Booking"]] = relationship(back_populates="room")
-    user: Mapped["User"] = relationship(back_populates="rooms")
+    bookings: Mapped[list["Booking"]] = relationship(back_populates="property")
+    user: Mapped["User"] = relationship(back_populates="properties")
 
 
 class Booking(Base):
     __tablename__ = "bookings"
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
-    room_id: Mapped[int] = mapped_column(ForeignKey("rooms.id"))
+    property_id: Mapped[int] = mapped_column(ForeignKey("properties.id"))
     guest_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
-    check_in: Mapped[datetime] = mapped_column(default=datetime.now)
-    check_out: Mapped[datetime] = mapped_column(default=datetime.now)
+    check_in: Mapped[date] = mapped_column(default=datetime.now)
+    check_out: Mapped[date] = mapped_column(default=datetime.now)
     guests: Mapped[int] = mapped_column(default=1)
     total_price: Mapped[float] = mapped_column(default=0.0)
     status: Mapped[BookingStatus] = mapped_column(default=BookingStatus.PENDING)
