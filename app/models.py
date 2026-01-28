@@ -26,6 +26,11 @@ class PropertyStatus(str, enum.Enum):
     ARCHIVED = "archived"
 
 
+class TokenType(str, enum.Enum):
+    ACCESS = "access"
+    REFRESH = "refresh"
+
+
 class User(Base):
     __tablename__ = "users"
 

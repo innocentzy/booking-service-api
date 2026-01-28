@@ -9,7 +9,7 @@ from pydantic import (
     ValidationInfo,
 )
 
-from app.models import UserRole, BookingStatus, PropertyStatus
+from app.models import UserRole, BookingStatus, PropertyStatus, Property
 
 
 class UserCreate(BaseModel):
@@ -17,6 +17,7 @@ class UserCreate(BaseModel):
     last_name: str = Field(..., min_length=2, max_length=50)
     email: EmailStr
     password: str = Field(..., min_length=6, max_length=100)
+    role: UserRole
 
 
 class UserResponse(BaseModel):
@@ -42,6 +43,20 @@ class PropertyBase(BaseModel):
 
 class PropertyCreate(PropertyBase):
     pass
+
+
+class PropertyFilter(BaseModel):
+    city: str | None
+    beds: int | None
+    min_price: float | None
+    max_price: float | None
+
+    @field_validator("min_price", "max_price")
+    @classmethod
+    def validate_price(cls, value: float) -> float:
+        if value < 0:
+            raise ValueError("Price must be positive")
+        return value
 
 
 class PropertyUpdate(BaseModel):
@@ -70,7 +85,7 @@ class PropertyResponse(BaseModel):
 
 
 class PaginatedProperties(BaseModel):
-    items: list[PropertyResponse]
+    items: list[Property]
     total: int
     limit: int
     offset: int
@@ -114,8 +129,14 @@ class BookingResponse(BaseModel):
 
 
 class Token(BaseModel):
-    access_token: str
-    token_type: str = "bearer"
+    value: str
+    token_type: str
+    token_sign: str = "bearer"
+
+
+class TokensPair(BaseModel):
+    access_token: Token
+    refresh_token: Token
 
 
 class TokenData(BaseModel):
