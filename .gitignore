@@ -4,4 +4,3 @@ requirements.in
 .pytest_cache/
 /*/__pycache__/
 /*/*/__pycache__
-/tests/
