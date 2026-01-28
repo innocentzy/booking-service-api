@@ -17,7 +17,6 @@ class UserCreate(BaseModel):
     last_name: str = Field(..., min_length=2, max_length=50)
     email: EmailStr
     password: str = Field(..., min_length=6, max_length=100)
-    role: UserRole
 
 
 class UserResponse(BaseModel):
@@ -85,7 +84,7 @@ class PropertyResponse(BaseModel):
 
 
 class PaginatedProperties(BaseModel):
-    items: list[Property]
+    items: list[PropertyResponse]
     total: int
     limit: int
     offset: int

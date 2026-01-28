@@ -33,7 +33,7 @@ async def login(credentials: LoginRequest, db: AsyncSession = Depends(get_db)):
 
     if not user or not verify_password(credentials.password, user.password):
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
+            status_code=status.HTTP_404_NOT_FOUND,
             detail="Incorrect email or password",
         )
 

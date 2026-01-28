@@ -43,7 +43,12 @@ async def list_properties(
         db, skip=offset, limit=limit, host_id=host_id, filters=filters
     )
     return PaginatedProperties(
-        items=properties, limit=limit, offset=offset, total=total
+        items=[
+            PropertyResponse.model_validate(property_obj) for property_obj in properties
+        ],
+        limit=limit,
+        offset=offset,
+        total=total,
     )
 
 
@@ -105,7 +110,7 @@ async def modify_property(
     return updated
 
 
-@router.delete("/{property_id}", response_model=status.HTTP_204_NO_CONTENT)
+@router.delete("/{property_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def remove_property(
     property_id: int,
     db: AsyncSession = Depends(get_db),
@@ -125,4 +130,9 @@ async def remove_property(
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, detail="Not enough permissions"
         )
-    await delete_property(db, property_id)
+    deleted = await delete_property(db, property_id)
+    if not deleted:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to delete"
+        )
+    return None
