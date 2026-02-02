@@ -28,7 +28,7 @@ async def get_current_user(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token payload"
         )
 
-    user = await get_user(db, user_id)
+    user = await get_user(db, int(user_id))
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found"

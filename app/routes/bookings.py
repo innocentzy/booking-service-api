@@ -66,7 +66,7 @@ async def place_booking(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error_msg)
 
 
-@router.get("/{booking_id}/confirmation", response_model=BookingResponse)
+@router.post("/{booking_id}/confirmation", response_model=BookingResponse)
 async def accept_booking(
     booking_id: int, db: AsyncSession = Depends(get_db), user=Depends(get_current_user)
 ):
@@ -75,7 +75,8 @@ async def accept_booking(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Booking not found"
         )
-    if not check_property_owner(db, booking.property_id, user.id):
+
+    if not await check_property_owner(db, booking.property_id, user.id):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You are not allowed to confirm this booking",
@@ -95,7 +96,9 @@ async def delete_booking(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Booking not found"
         )
-    if not check_booking_owner(db, booking_id, user.id):
+    if user.role == UserRole.ADMIN:
+        return await cancel_booking(db, booking_id)
+    if not await check_booking_owner(db, booking_id, user.id):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, detail="Not enough permissions"
         )

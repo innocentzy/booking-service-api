@@ -86,6 +86,23 @@ async def test_customer(db_session: AsyncSession):
 
 
 @pytest.fixture
+async def test_admin(db_session: AsyncSession):
+    from app.models import User
+
+    user = User(
+        first_name="Admin",
+        last_name="User",
+        email="admin@example.com",
+        password=get_password_hash("admin123"),
+        role=UserRole.ADMIN,
+    )
+    db_session.add(user)
+    await db_session.commit()
+    await db_session.refresh(user)
+    return user
+
+
+@pytest.fixture
 async def host_token(test_host):
     return create_access_token({"sub": str(test_host.id)})
 
@@ -96,12 +113,18 @@ async def customer_token(test_customer):
 
 
 @pytest.fixture
+async def admin_token(test_admin):
+    return create_access_token({"sub": str(test_admin.id)})
+
+
+@pytest.fixture
 async def test_property(db_session: AsyncSession, test_host):
     from app.models import Property
 
     property = Property(
         title="Test Property",
         description="This is a test property",
+        address="New Address",
         price=100,
         city="Test City",
         beds=2,
@@ -114,20 +137,16 @@ async def test_property(db_session: AsyncSession, test_host):
 
 
 @pytest.fixture
-async def property_data(db_session: AsyncSession):
-    from app.models import Property, PropertyStatus
+async def test_booking(db_session: AsyncSession, test_property):
+    from app.models import Booking
 
-    property = Property(
-        host_id=1,
-        title="Test Property",
-        description="Test Description",
-        address="Test Address",
-        city="Test City",
-        price=100,
-        beds=2,
-        status=PropertyStatus.AVAILABLE,
+    booking = Booking(
+        property_id=test_property.id,
+        guest_id=1,
+        check_in=date(2025, 1, 1),
+        check_out=date(2025, 1, 5),
     )
-    db_session.add(property)
+    db_session.add(booking)
     await db_session.commit()
-    await db_session.refresh(property)
-    return property
+    await db_session.refresh(booking)
+    return booking

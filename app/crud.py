@@ -48,8 +48,19 @@ async def get_user_by_email(db: AsyncSession, email: str) -> User | None:
     return result.scalar_one_or_none()
 
 
-async def create_property(db: AsyncSession, property: PropertyCreate) -> Property:
-    db_property = Property(**property.model_dump())
+async def create_property(
+    db: AsyncSession, property: PropertyCreate, user_id: int
+) -> Property:
+    db_property = Property(
+        title=property.title,
+        description=property.description,
+        address=property.address,
+        beds=property.beds,
+        city=property.city,
+        price=property.price,
+        host_id=user_id,
+    )
+
     db.add(db_property)
     await db.flush()
     await db.refresh(db_property)
@@ -68,10 +79,13 @@ async def get_properties(
     count_query = select(func.count(Property.id))
 
     if host_id:
-        query = query.where(Property.host_id == host_id)
+        query = query.options(selectinload(Property.user)).where(
+            Property.host_id == host_id
+        )
         count_query = count_query.where(Property.host_id == host_id)
 
     conditions = []
+
     if filters:
         if filters.min_price is not None:
             conditions.append(Property.price >= filters.min_price)
@@ -82,8 +96,9 @@ async def get_properties(
         if filters.beds is not None:
             conditions.append(Property.beds >= filters.beds)
 
-    count_query = select(func.count()).select_from(Property).where(*conditions)
-    query = select(Property).where(*conditions).order_by(Property.created_at.desc())
+    if conditions:
+        count_query = select(func.count()).select_from(Property).where(*conditions)
+        query = select(Property).where(*conditions).order_by(Property.created_at.desc())
 
     total_result = await db.execute(count_query)
     total = total_result.scalar_one()
@@ -224,6 +239,7 @@ async def cancel_booking(db: AsyncSession, booking_id: int) -> Booking:
         raise ValueError("Booking not found")
     db_booking.cancelled_at = datetime.now()
     db_booking.status = BookingStatus.CANCELLED
+    await db.commit()
     await db.refresh(db_booking)
     return db_booking
 
@@ -236,5 +252,6 @@ async def confirm_booking(db: AsyncSession, booking_id: int) -> Booking:
         raise ValueError("Booking not found")
     db_booking.updated_at = datetime.now()
     db_booking.status = BookingStatus.CONFIRMED
+    await db.commit()
     await db.refresh(db_booking)
     return db_booking

@@ -42,6 +42,7 @@ async def list_properties(
     properties, total = await get_properties(
         db, skip=offset, limit=limit, host_id=host_id, filters=filters
     )
+
     return PaginatedProperties(
         items=[
             PropertyResponse.model_validate(property_obj) for property_obj in properties
@@ -78,7 +79,7 @@ async def add_property(
             detail="Only host users can add properties",
         )
 
-    return await create_property(db, property)
+    return await create_property(db, property, user.id)
 
 
 @router.patch("/{property_id}", response_model=PropertyResponse)

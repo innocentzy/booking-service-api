@@ -16,7 +16,7 @@ class UserRole(str, enum.Enum):
 class BookingStatus(str, enum.Enum):
     PENDING = "pending"
     CONFIRMED = "confirmed"
-    CANCELLED = "canceled"
+    CANCELLED = "cancelled"
     COMPLETED = "completed"
 
 
@@ -65,7 +65,7 @@ class Property(Base):
     created_at: Mapped[datetime] = mapped_column(default=datetime.now)
 
     bookings: Mapped[list["Booking"]] = relationship(back_populates="property")
-    user: Mapped["User"] = relationship(back_populates="properties")
+    user: Mapped["User"] = relationship(back_populates="properties", lazy="selectin")
 
 
 class Booking(Base):

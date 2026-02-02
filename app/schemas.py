@@ -37,7 +37,6 @@ class PropertyBase(BaseModel):
     city: str = Field(..., min_length=3, max_length=255)
     beds: int = Field(..., ge=1, le=10)
     price: float = Field(..., ge=0.0)
-    host_id: int
 
 
 class PropertyCreate(PropertyBase):
@@ -53,6 +52,8 @@ class PropertyFilter(BaseModel):
     @field_validator("min_price", "max_price")
     @classmethod
     def validate_price(cls, value: float) -> float:
+        if value is None:
+            return value
         if value < 0:
             raise ValueError("Price must be positive")
         return value
