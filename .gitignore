@@ -1,5 +1,4 @@
 .env
-requirements.in
 /venv/
 .pytest_cache/
 /*/__pycache__/
