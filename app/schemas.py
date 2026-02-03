@@ -100,7 +100,7 @@ class BookingCreate(BaseModel):
     @field_validator("check_in")
     @classmethod
     def check_in_date_is_after_today(cls, v: date) -> date:
-        if v > date.today():
+        if v < date.today():
             raise ValueError("Check-in date must be after today")
         return v
 

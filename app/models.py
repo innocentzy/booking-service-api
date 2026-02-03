@@ -73,7 +73,7 @@ class Booking(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     property_id: Mapped[int] = mapped_column(ForeignKey("properties.id"))
-    guest_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
+    guest_id: Mapped[int] = mapped_column(ForeignKey("users.id"), default=1)
     check_in: Mapped[date] = mapped_column(default=datetime.now)
     check_out: Mapped[date] = mapped_column(default=datetime.now)
     guests: Mapped[int] = mapped_column(default=1)
