@@ -1,6 +1,6 @@
 from sqlalchemy import func, select, and_, or_
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import selectinload, Session, joinedload
 
 from datetime import date
 
@@ -255,3 +255,17 @@ async def confirm_booking(db: AsyncSession, booking_id: int) -> Booking:
     await db.commit()
     await db.refresh(db_booking)
     return db_booking
+
+
+def get_user_sync(db: Session, user_id: int) -> User | None:
+    result = db.execute(select(User).where(User.id == user_id))
+    return result.scalar_one_or_none()
+
+
+def get_booking_sync(db: Session, booking_id: int) -> Booking | None:
+    result = db.execute(
+        select(Booking)
+        .where(Booking.id == booking_id)
+        .options(joinedload(Booking.property))
+    )
+    return result.scalar_one_or_none()

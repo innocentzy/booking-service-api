@@ -2,6 +2,8 @@ from fastapi import FastAPI
 
 from app.routes import auth, bookings, properties
 
+from app.worker.app import app as celery_app
+
 app = FastAPI(
     title="Booking Service API",
     description="API for booking service",

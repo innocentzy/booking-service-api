@@ -15,6 +15,9 @@ from app.dependencies import get_current_user
 from app.models import User, UserRole
 from app.schemas import BookingCreate, BookingResponse
 
+from app.worker.tasks import process_booking_confirmation
+from celery.result import AsyncResult
+
 router = APIRouter(prefix="/bookings", tags=["bookings"])
 
 
@@ -52,13 +55,25 @@ async def place_booking(
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
+    from typing import cast
+    from celery import Task
+
     if user.role == UserRole.HOST:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Only customers can place bookings",
         )
     try:
-        return await create_booking(db, user.id, booking)
+        new_booking = await create_booking(db, user.id, booking)
+        await db.commit()
+        await db.refresh(new_booking)
+
+        cast(Task, process_booking_confirmation).delay(
+            booking_id=new_booking.id, user_email=user.email
+        )
+
+        new_booking = await confirm_booking(db, new_booking.id)
+        return new_booking
     except ValueError as e:
         error_msg = str(e)
         if "not found" in error_msg.lower():
@@ -66,23 +81,15 @@ async def place_booking(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error_msg)
 
 
-@router.post("/{booking_id}/confirmation", response_model=BookingResponse)
-async def accept_booking(
-    booking_id: int, db: AsyncSession = Depends(get_db), user=Depends(get_current_user)
-):
-    booking = await get_booking(db, booking_id)
-    if not booking:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Booking not found"
-        )
+@router.get("/task-status/{task_id}")
+async def get_booking_status(task_id: int):
+    task_result = AsyncResult(task_id)
 
-    if not await check_property_owner(db, booking.property_id, user.id):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="You are not allowed to confirm this booking",
-        )
-    confirmed = await confirm_booking(db=db, booking_id=booking_id)
-    return confirmed
+    return {
+        "task_id": task_id,
+        "status": task_result.status,
+        "result": task_result.result if task_result.result else None,
+    }
 
 
 @router.delete("/{booking_id}", response_model=BookingResponse)

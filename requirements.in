@@ -13,3 +13,8 @@ pytest
 pytest-asyncio
 aiosqlite
 bcrypt
+celery[redis]
+redis
+reportlab
+pillow
+psycopg2
