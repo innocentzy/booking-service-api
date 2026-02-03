@@ -35,17 +35,20 @@ async def get_booking_detail(
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    if not await check_property_owner(
-        db, booking_id, user.id
-    ) and not await check_booking_owner(db, booking_id, user.id):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="Not enough permissions"
-        )
     booking = await get_booking(db, booking_id)
     if not booking:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Booking not found"
         )
+
+    is_property_owner = await check_property_owner(db, booking.property_id, user.id)
+    is_booking_guest = await check_booking_owner(db, booking_id, user.id)
+
+    if not is_property_owner and not is_booking_guest:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Not enough permissions"
+        )
+
     return booking
 
 
