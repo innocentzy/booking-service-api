@@ -11,15 +11,15 @@ async def test_create_booking_success(
         json={
             "property_id": test_property.id,
             "guests": 2,
-            "check_in": "2025-01-01",
-            "check_out": "2025-01-02",
+            "check_in": "2026-11-02",
+            "check_out": "2026-11-12",
         },
         headers={"Authorization": f"Bearer {customer_token}"},
     )
     assert response.status_code == 201
     data = response.json()
     assert data["guests"] == 2
-    assert data["check_in"] == "2025-01-01"
+    assert data["check_in"] == "2026-11-02"
 
 
 @pytest.mark.asyncio
@@ -29,8 +29,8 @@ async def test_create_booking_unauthorized(client: AsyncClient, test_property):
         json={
             "property_id": test_property.id,
             "guests": 2,
-            "check_in": "2025-01-01",
-            "check_out": "2025-01-02",
+            "check_in": "2026-11-12",
+            "check_out": "2026-11-16",
         },
     )
     assert response.status_code == 401
@@ -43,8 +43,8 @@ async def test_create_booking_property_not_found(client: AsyncClient, customer_t
         json={
             "property_id": 999,
             "guests": 2,
-            "check_in": "2025-01-01",
-            "check_out": "2025-01-02",
+            "check_in": "2026-11-12",
+            "check_out": "2026-11-13",
         },
         headers={"Authorization": f"Bearer {customer_token}"},
     )
@@ -52,9 +52,9 @@ async def test_create_booking_property_not_found(client: AsyncClient, customer_t
 
 
 @pytest.mark.asyncio
-async def test_get_list_property(client: AsyncClient, test_booking, host_token):
+async def test_get_list_bookings(client: AsyncClient, test_booking, customer_token):
     response = await client.get(
-        "/bookings", headers={"Authorization": f"Bearer {host_token}"}
+        "/bookings", headers={"Authorization": f"Bearer {customer_token}"}
     )
     assert response.status_code == 200
     data = response.json()
@@ -73,21 +73,10 @@ async def test_get_booking_detail(client: AsyncClient, test_booking, host_token)
 
 
 @pytest.mark.asyncio
-async def test_accept_booking(client: AsyncClient, test_booking, host_token):
-    response = await client.post(
-        f"/bookings/{test_booking.id}/confirmation",
-        headers={"Authorization": f"Bearer {host_token}"},
-    )
-    assert response.status_code == 200
-    data = response.json()
-    assert data["status"] == "confirmed"
-
-
-@pytest.mark.asyncio
-async def test_cancel_booking(client: AsyncClient, test_booking, host_token):
+async def test_cancel_booking(client: AsyncClient, test_booking, customer_token):
     response = await client.delete(
         f"/bookings/{test_booking.id}",
-        headers={"Authorization": f"Bearer {host_token}"},
+        headers={"Authorization": f"Bearer {customer_token}"},
     )
     assert response.status_code == 200
     data = response.json()
@@ -95,23 +84,10 @@ async def test_cancel_booking(client: AsyncClient, test_booking, host_token):
 
 
 @pytest.mark.asyncio
-async def test_wrong_user_accept_booking(
-    client: AsyncClient, test_booking, customer_token
-):
-    response = await client.post(
-        f"/bookings/{test_booking.id}/confirmation",
-        headers={"Authorization": f"Bearer {customer_token}"},
-    )
-    assert response.status_code == 403
-
-
-@pytest.mark.asyncio
-async def test_wrong_user_cancel_booking(
-    client: AsyncClient, test_booking, customer_token
-):
+async def test_wrong_user_cancel_booking(client: AsyncClient, test_booking, host_token):
     response = await client.delete(
         f"/bookings/{test_booking.id}",
-        headers={"Authorization": f"Bearer {customer_token}"},
+        headers={"Authorization": f"Bearer {host_token}"},
     )
     assert response.status_code == 403
 

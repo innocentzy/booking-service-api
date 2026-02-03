@@ -1,5 +1,6 @@
 import asyncio
 from collections.abc import AsyncGenerator
+from unittest.mock import patch, MagicMock
 
 import pytest
 from httpx import ASGITransport, AsyncClient
@@ -49,6 +50,13 @@ async def client(db_session: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
         yield ac
 
     app.dependency_overrides.clear()
+
+
+@pytest.fixture(autouse=True)
+def mock_celery_tasks():
+    with patch("app.routes.bookings.process_booking_confirmation") as mock_task:
+        mock_task.delay = MagicMock(return_value=None)
+        yield mock_task
 
 
 @pytest.fixture
@@ -137,12 +145,12 @@ async def test_property(db_session: AsyncSession, test_host):
 
 
 @pytest.fixture
-async def test_booking(db_session: AsyncSession, test_property):
+async def test_booking(db_session: AsyncSession, test_property, test_customer):
     from app.models import Booking
 
     booking = Booking(
         property_id=test_property.id,
-        guest_id=1,
+        guest_id=test_customer.id,
         check_in=date(2025, 1, 1),
         check_out=date(2025, 1, 5),
     )
