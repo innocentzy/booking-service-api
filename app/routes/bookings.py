@@ -81,17 +81,6 @@ async def place_booking(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error_msg)
 
 
-@router.get("/task-status/{task_id}")
-async def get_booking_status(task_id: int):
-    task_result = AsyncResult(task_id)
-
-    return {
-        "task_id": task_id,
-        "status": task_result.status,
-        "result": task_result.result if task_result.result else None,
-    }
-
-
 @router.delete("/{booking_id}", response_model=BookingResponse)
 async def delete_booking(
     booking_id: int,

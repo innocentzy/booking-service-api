@@ -8,6 +8,10 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
 
+    POSTGRES_USER: str = "postgres"
+    POSTGRES_PASSWORD: str = "postgres"
+    POSTGRES_DB: str = "bookingservice"
+
     REDIS_URL: str = "redis://127.0.0.1:6379/0"
     CELERY_BROKER_URL: str = "redis://127.0.0.1:6379/0"
     CELERY_RESULT_BACKEND: str = "redis://127.0.0.1:6379/0"
